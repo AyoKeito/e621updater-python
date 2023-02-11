@@ -1,6 +1,8 @@
 # e621updater-python
 
-Initial release of e621updater rewritten in python.
+Initial release of e621updater rewritten in python.  
+This is a **BETA** release written mostly by OpenAI ChatGPT. It works, at least on my PC.  
+There are a lot of things to improve in this code. Contributions are welcome.  
 
 You will also need exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder of compiled executable.  
 Tested and working as python scripts via Python 3.10 and a bunch of dependencies listed in requirements.txt on Windows 10\11.
@@ -20,7 +22,9 @@ options:
                         tag them again)
 ```
 tagger.py SHOULD be run with `-f, --in-file` or `-t, --in-txt` command line arguments. You don't need to specify `-p FOLDER_PATH, --folder-path FOLDER_PATH` and you will be prompted to select the folder you want.  
-tagger.py **requires** parquet database of e621 posts and an additional tag database to separate artists from other tags.
+
+> **Warning**
+> tagger.py **requires** parquet database of e621 posts and an additional tag database to separate artists from other tags.
 
 ## This database is obtained by launching database.py:
 ![database.py](/img/PowerShell_2023-02-11_21_33_46.jpg)
@@ -35,9 +39,11 @@ options:
   --proxy PROXY  The proxy to use for all network calls (optional). Usage examples: http://proxy.server:8888 or
                  http://user:password@proxy.server:8888
 ```
+> **Warning**
+> database.py downloads around 1GB of data from https://e621.net/db_export/ each time it's run.  
 
-**BE WARNED** that database.py downloads about 1GB of data from https://e621.net/db_export/ each time it's run.  
 6GB of free RAM is required to run it.  
 Around 400MB of files will be written to disk as a result (trimmed databases posts.parquet and artists.parquet).  
 You don't need to update it unless you want to tag files added to e621 since the last time you've updated the database.  
 Tagger WILL NOT succeed without the correctly prepared databases in it's working folder.  
+It will also fail to find any files added after you've updated the database via database.py.
