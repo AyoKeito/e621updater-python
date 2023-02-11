@@ -3,7 +3,7 @@ e621 tagger companion - database downloader
 
 Author: AyoKeito
 Version: 1.0.0
-GitHub: https://github.com/johndoe/my-python-script
+GitHub: https://github.com/AyoKeito/e621updater-python
 
 To tag stuff, you should know stuff.
 """
