@@ -3,3 +3,37 @@
 Initial release of e621updater rewritten in python.
 
 You will also need exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder of compiled executable.
+
+Main script is tagger.py:
+```
+usage: tagger.py [-h] [-f] [-t] [-p FOLDER_PATH] [-n]
+
+options:
+  -h, --help            show this help message and exit
+  -f, --in-file         Write the tags found in database to image EXIF
+  -t, --in-txt          Write the tags to sidecar txt files (useful for ML databases)
+  -p FOLDER_PATH, --folder-path FOLDER_PATH
+                        Path to the folder containing the images, for example: F:\myfiles\test\
+  -n, --no-rename       Do not rename the images if they are found by MD5 and not by name (you WON'T be able to
+                        tag them again)
+```
+
+Requires parquet database of e621 posts. Also requires additional tag database to separate artists from other tags.
+This database is obtained by launching database.py:
+```
+usage: database.py [-h] [--proxy PROXY]
+
+Download and process CSV files. Download gz archives, extract & filter irrelevant data, and save as compressed parquet
+files.
+
+options:
+  -h, --help     show this help message and exit
+  --proxy PROXY  The proxy to use for all network calls (optional). Usage examples: http://proxy.server:8888 or
+                 http://user:password@proxy.server:8888
+```
+
+**BE WARNED** that database.py downloads about 1GB of data from https://e621.net/db_export/ each time it's run.  
+6GB of free RAM is required to run it.  
+Around 400MB of files will be written to disk as a result (trimmed databases posts.parquet and artists.parquet).  
+You don't need to update it unless you want to tag files added to e621 since the last time you've updated the database.  
+Tagger WILL NOT succeed without the correctly prepared databases in it's working folder.  
