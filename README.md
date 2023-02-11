@@ -2,9 +2,11 @@
 
 Initial release of e621updater rewritten in python.
 
-You will also need exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder of compiled executable.
+You will also need exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder of compiled executable.  
+Tested and working as python scripts via Python 3.10 and a bunch of dependencies listed in requirements.txt on Windows 10\11.
 
-Main script is tagger.py:
+## Main script is tagger.py:
+![tagger.py](/img/PowerShell_2023-02-11_21_27_18.jpg)
 ```
 usage: tagger.py [-h] [-f] [-t] [-p FOLDER_PATH] [-n]
 
@@ -19,7 +21,9 @@ options:
 ```
 
 Requires parquet database of e621 posts. Also requires additional tag database to separate artists from other tags.
-This database is obtained by launching database.py:
+
+## This database is obtained by launching database.py:
+![database.py](/img/PowerShell_2023-02-11_21_33_46.jpg)
 ```
 usage: database.py [-h] [--proxy PROXY]
 
