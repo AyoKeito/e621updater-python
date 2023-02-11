@@ -3,7 +3,7 @@ e621 tagger
 
 Author: AyoKeito
 Version: 1.0.0
-GitHub: https://github.com/johndoe/my-python-script
+GitHub: https://github.com/AyoKeito/e621updater-python
 
 Let's tag your yiff!
 """
