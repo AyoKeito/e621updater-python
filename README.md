@@ -11,17 +11,19 @@ Tested and working as python scripts via Python 3.10 and a bunch of dependencies
 ![tagger.py](/img/PowerShell_2023-02-11_21_27_18.jpg)
 ```
 usage: tagger.py [-h] [-f] [-t] [-p FOLDER_PATH] [-n]
-
-options:
-  -h, --help            show this help message and exit
-  -f, --in-file         Write the tags found in database to image EXIF
-  -t, --in-txt          Write the tags to sidecar txt files (useful for ML databases)
-  -p FOLDER_PATH, --folder-path FOLDER_PATH
-                        Path to the folder containing the images, for example: F:\myfiles\test\
-  -n, --no-rename       Do not rename the images if they are found by MD5 and not by name (you WON'T be able to
-                        tag them again)
 ```
-tagger.py SHOULD be run with `-f, --in-file` or `-t, --in-txt` command line arguments. You don't need to specify `-p FOLDER_PATH, --folder-path FOLDER_PATH` and you will be prompted to select the folder you want.  
+tagger.py SHOULD be run with `-f, --in-file` or `-t, --in-txt` command line arguments:
+| Flag        | Description |
+|-------------|-------------|
+| `-f`, `--in-file`  | Write the tags found in database to image EXIF |
+| `-t`, `--in-txt`    | Write the tags to sidecar txt files (useful for ML databases) |
+
+Optionally, you can use the following command-line flags:
+
+| Flag        | Description |
+|-------------|-------------|
+| `-p FOLDER_PATH`, `--folder-path FOLDER_PATH`  | Path to the folder containing the images, for example: F:\myfiles\test\ |
+| `-n`, `--no-rename`    | Do not rename the images if they are found by MD5 and not by name (you WON'T be able to tag them again) |
 
 > **Warning**
 > tagger.py **requires** parquet database of e621 posts and an additional tag database to separate artists from other tags.
@@ -30,15 +32,12 @@ tagger.py SHOULD be run with `-f, --in-file` or `-t, --in-txt` command line argu
 ![database.py](/img/PowerShell_2023-02-11_21_33_46.jpg)
 ```
 usage: database.py [-h] [--proxy PROXY]
-
-Download and process CSV files. Download gz archives, extract & filter irrelevant data, and save as compressed parquet
-files.
-
-options:
-  -h, --help     show this help message and exit
-  --proxy PROXY  The proxy to use for all network calls (optional). Usage examples: http://proxy.server:8888 or
-                 http://user:password@proxy.server:8888
 ```
+Optionally, you can use a proxy:
+| Flag        | Description |
+|-------------|-------------|
+| `--proxy PROXY`  | The proxy to use for all network calls. Usage examples: http://proxy.server:8888 or http://user:password@proxy.server:8888 |
+
 > **Warning**
 > database.py downloads around 1GB of data from https://e621.net/db_export/ each time it's run.  
 
@@ -47,3 +46,5 @@ Around 400MB of files will be written to disk as a result (trimmed databases pos
 You don't need to update it unless you want to tag files added to e621 since the last time you've updated the database.  
 Tagger WILL NOT succeed without the correctly prepared databases in it's working folder.  
 It will also fail to find any files added after you've updated the database via database.py.
+
+
