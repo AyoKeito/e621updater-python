@@ -19,8 +19,8 @@ options:
   -n, --no-rename       Do not rename the images if they are found by MD5 and not by name (you WON'T be able to
                         tag them again)
 ```
-
-Requires parquet database of e621 posts. Also requires additional tag database to separate artists from other tags.
+tagger.py SHOULD be run with `-f, --in-file` or `-t, --in-txt` command line arguments. You don't need to specify `-p FOLDER_PATH, --folder-path FOLDER_PATH` and you will be prompted to select the folder you want.  
+tagger.py **requires** parquet database of e621 posts and an additional tag database to separate artists from other tags.
 
 ## This database is obtained by launching database.py:
 ![database.py](/img/PowerShell_2023-02-11_21_33_46.jpg)
