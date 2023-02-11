@@ -6,7 +6,7 @@ There are a lot of things to improve in this code. Contributions are welcome.
 
 You will also need exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder of compiled executable.  
 Tested and working as python scripts via Python 3.10 and a bunch of dependencies listed in requirements.txt on Windows 10\11.  
-As this is the first Python thing i've done, i'm not sure requirements.txt is entirely correct. Some things may be missing. Feedback is welcome :)
+As this is the first Python thing i've done, i'm not sure requirements.txt is entirely correct. Some things may be missing. Feedback is welcome :)  
 Compiled Windows build is also available in Releases. It should not require any dependencies on your side.
 
 ## Main script is tagger.py:
