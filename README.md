@@ -12,7 +12,7 @@ Compiled Windows build is also available in Releases. It should not require any 
 ## Main script is tagger.py:
 ![tagger.py](/img/PowerShell_2023-02-11_21_27_18.jpg)
 ```
-usage: tagger.py [-h] [-f] [-t] [-p FOLDER_PATH] [-n]
+usage: tagger.py [-h] [-f] [-t] [-p FOLDER_PATH] [-n] [-s]
 ```
 tagger.py SHOULD be run with `-f, --in-file` or `-t, --in-txt` command line arguments:
 | Flag        | Description |
