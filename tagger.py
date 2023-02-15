@@ -22,7 +22,7 @@ def select_folder():
     folder_selected = askdirectory() # show an "Open" dialog box and return the path to the selected folder
     return folder_selected
 
-def build_list_of_images(folder_path, subfolders=False):
+def build_list_of_images(folder_path, subfolders=args.subfolders):
     list_of_images = []
     if subfolders:
         for root, dirs, files in os.walk(folder_path):
