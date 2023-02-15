@@ -26,6 +26,7 @@ Optionally, you can use the following command-line flags:
 |-------------|-------------|
 | `-p FOLDER_PATH`, `--folder-path FOLDER_PATH`  | Path to the folder containing the images, for example: F:\myfiles\test\ |
 | `-n`, `--no-rename`    | Do not rename the images if they are found by MD5 and not by name (you WON'T be able to tag them again) |
+| `-s`, `--subfolders`    | Process subfolders of the specified folder |
 
 > **Warning**
 > tagger.py **requires** parquet database of e621 posts and an additional tag database to separate artists from other tags.
