@@ -2,7 +2,7 @@
 e621 tagger
 
 Author: AyoKeito
-Version: 1.0.0
+Version: 1.1.0
 GitHub: https://github.com/AyoKeito/e621updater-python
 
 Let's tag your yiff!
@@ -22,11 +22,20 @@ def select_folder():
     folder_selected = askdirectory() # show an "Open" dialog box and return the path to the selected folder
     return folder_selected
 
-def build_list_of_images(folder_path):
+def build_list_of_images(folder_path, subfolders=False):
     list_of_images = []
-    for filename in os.listdir(folder_path):
-        if filename.endswith(".png") or filename.endswith(".jpg") or filename.endswith(".jpeg"):
-            list_of_images.append(filename)
+    if subfolders:
+        for root, dirs, files in os.walk(folder_path):
+            # Ignore the "NotFound" directory
+            if "NotFound" in dirs:
+                dirs.remove("NotFound")
+            for filename in files:
+                if filename.endswith(".png") or filename.endswith(".jpg") or filename.endswith(".jpeg"):
+                    list_of_images.append(os.path.join(root, filename))
+    else:
+        for filename in os.listdir(folder_path):
+            if filename.endswith(".png") or filename.endswith(".jpg") or filename.endswith(".jpeg"):
+                list_of_images.append(os.path.join(folder_path, filename))
     return list_of_images
 
 def calculate_md5(file_path):
@@ -75,6 +84,7 @@ parser.add_argument("-f", "--in-file", help="Write the tags found in database to
 parser.add_argument("-t", "--in-txt", help="Write the tags to sidecar txt files (useful for ML databases)", action='store_true')
 parser.add_argument("-p", "--folder-path", help="Path to the folder containing the images, for example: F:\\myfiles\\test\\", type=str)
 parser.add_argument("-n", "--no-rename", help="Do not rename the images if they are found by MD5 and not by name (you \033[4mWON'T\033[0m be able to tag them again)", action='store_true')
+parser.add_argument("-s", "--subfolders", help="Process subfolders of the specified folder", action='store_true')
 args = parser.parse_args()
 
 if not args.in_file and not args.in_txt:
