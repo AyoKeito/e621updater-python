@@ -44,7 +44,7 @@ def search_in_posts(file_name, file_md5, posts_df):
         index = posts_df[posts_df["md5"] == file_md5].index.tolist()[0]
         return posts_df.at[index, "tag_string"]
     else:
-        #print("File:", file_name, " not found in the posts data")
+        print("File:", file_name, " not found in the posts data")
         return None
 
 def write_to_exif(file_path, tag_string):
@@ -117,21 +117,17 @@ for image_file in list_of_images:
     if args.in_txt:
         write_to_txt(file_path, tag_string)
     if found_by == "MISSING":
-        #print("\033[31m{:<36} {:<12} {:<30}\033[0m".format(image_file, found_by, tag_string[:30]))
         print("\033[31m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", image_file, found_by, tag_string[:30]))
         not_found.append(file_path)
     if found_by == "Found (MD5)":
         if args.no_rename:
-            #print("\033[33m{:<36} {:<12} {:<30}\033[0m".format(image_file, found_by, tag_string[:30]))
             print("\033[33m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", image_file, found_by, tag_string[:30]))
         else:
-            #print("\033[33m{:<36} {:<12} {:<30}\033[0m".format(image_file, found_by, tag_string[:30]))
             print("\033[33m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", image_file, found_by, tag_string[:30]))
             new_file_name = f"{file_md5}{file_extension}"
             os.rename(file_path, os.path.join(folder_path, new_file_name))
             renamed_files.append((image_file, new_file_name))
     if found_by == "Found (NAME)":
-        #print("\033[32m{:<36} {:<12} {:<30}\033[0m".format(image_file, found_by, tag_string[:30]))
         print("\033[32m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", image_file, found_by, tag_string[:30]))
     processed_count += 1
 
