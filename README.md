@@ -43,7 +43,7 @@ Optionally, you can use a proxy:
 > **Warning**
 > database.py downloads around 1GB of data from https://e621.net/db_export/ each time it's run. There is no verification if any downloads are needed, files are updated regardless.
 
-6GB of free RAM is required to run it.  
+7.5GB of free RAM is required to run it.  
 Around 400MB of files will be written to disk as a result (trimmed databases `posts.parquet` and `artists.parquet`).  
 You don't need to update them unless you want to tag files added to e621 since the last time you've updated the database.  
 Tagger WILL NOT succeed without the correctly prepared databases in it's working folder.  
