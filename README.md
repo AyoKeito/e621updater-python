@@ -33,7 +33,7 @@ Optionally, you can use the following command-line flags:
 ## This database is obtained by launching database.py:
 ![database.py](/img/PowerShell_2023-02-11_21_33_46.jpg)
 ```
-usage: database.py [-h] [--proxy PROXY]
+usage: database.py [-h] [-p PROXY]
 ```
 Optionally, you can use a proxy:
 | Flag        | Description |
