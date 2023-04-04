@@ -47,4 +47,4 @@ Optionally, you can use a proxy:
 Around 400MB of files will be written to disk as a result (trimmed databases `posts.parquet` and `artists.parquet`).  
 You don't need to update them unless you want to tag files added to e621 since the last time you've updated the database.  
 Tagger WILL NOT succeed without the correctly prepared databases in it's working folder.  
-It will also fail to find any files added after you've updated the database via database.py.
+It will also fail to find any files uploaded to e621 after you've last updated the database via database.py.
