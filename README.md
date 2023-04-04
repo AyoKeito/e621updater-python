@@ -41,7 +41,7 @@ Optionally, you can use a proxy:
 | `-p PROXY`, `--proxy PROXY`  | The proxy to use for all network calls. Usage examples: http://proxy.server:8888 or http://user:password@proxy.server:8888 |
 
 > **Warning**
-> database.py downloads around 1GB of data from https://e621.net/db_export/ each time it's run.  
+> database.py downloads around 1GB of data from https://e621.net/db_export/ each time it's run. There is no verification if any downloads are needed, files are updated regardless.
 
 6GB of free RAM is required to run it.  
 Around 400MB of files will be written to disk as a result (trimmed databases `posts.parquet` and `artists.parquet`).  
