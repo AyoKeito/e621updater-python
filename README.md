@@ -4,7 +4,7 @@ e621updater rewritten in python.
 This script is mostly written by OpenAI ChatGPT. It works, at least on my PC.  
 There are a lot of things to improve in this code. Contributions are welcome.  
 
-You will also exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder.  
+You will need exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder.  
 
 Tested and working as python scripts via Python 3.10 and a bunch of dependencies listed in requirements.txt on Windows 10\11.  
 As this is the first Python thing i've done, i'm not sure requirements.txt is entirely correct. Some things may be missing. Feedback is welcome :)  
