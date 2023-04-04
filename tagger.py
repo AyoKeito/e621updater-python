@@ -108,6 +108,8 @@ if not_found:
     os.makedirs(not_found_directory, exist_ok=True)
     for file_path in not_found:
         destination_path = os.path.join(not_found_directory, os.path.basename(file_path))
+        if os.path.exists(destination_path):
+            os.remove(destination_path)  # delete existing file before moving
         shutil.move(file_path, not_found_directory)
     print("Processed image", processed_count, "of", len(list_of_images), "\n", len(not_found), "files are not found")
 else:
