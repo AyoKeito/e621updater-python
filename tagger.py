@@ -39,14 +39,15 @@ def search_in_posts(file_name, file_md5, posts_df):
         return None
 
 def write_to_exif(file_path, tag_string):
-    artists_df = pd.read_parquet("artists.parquet")
-    artists_list = set(artists_df['name'])
-    trash_tags = {"conditional_dnp", "avoid_posting", "unknown_artist", "absurd_res", "hi_res", "digital_media_(artwork)", "traditional_media_(artwork)"}
-    subject_tags = ", ".join(tag for tag in tag_string.split(", ") if tag not in trash_tags and tag not in artists_list)
-    creator_tags = ", ".join(tag for tag in tag_string.split(", ") if tag in artists_list)
-    with exiftool.ExifTool() as et:
-        et.execute(f"-xmp-dc:subject={subject_tags}", "-overwrite_original_in_place", file_path)
-        et.execute(f"-xmp-dc:creator={creator_tags}", "-overwrite_original_in_place", file_path)
+    if tag_string is not None:
+        artists_df = pd.read_parquet("artists.parquet")
+        artists_list = set(artists_df['name'])
+        trash_tags = {"conditional_dnp", "avoid_posting", "unknown_artist", "absurd_res", "hi_res", "digital_media_(artwork)", "traditional_media_(artwork)"}
+        subject_tags = ", ".join(tag for tag in tag_string.split(", ") if tag not in trash_tags and tag not in artists_list)
+        creator_tags = ", ".join(tag for tag in tag_string.split(", ") if tag in artists_list)
+        with exiftool.ExifTool() as et:
+            et.execute(f"-xmp-dc:subject={subject_tags}", "-overwrite_original_in_place", file_path)
+            et.execute(f"-xmp-dc:creator={creator_tags}", "-overwrite_original_in_place", file_path)
 
 def write_to_txt(file_path, tag_string):
     txt_file_path = os.path.splitext(file_path)[0] + ".txt"
@@ -84,10 +85,6 @@ for image_file in list_of_images:
     else:
         if (tag_string := search_in_posts(None, calculate_md5(file_path), posts_df)) is not None:
             tag_string, found_by = tag_string.replace(" ", ", "), "Found (MD5)"
-    if args.in_file:
-        write_to_exif(file_path, tag_string)
-    if args.in_txt:
-        write_to_txt(file_path, tag_string)
     if found_by == "MISSING":
         not_found.append(file_path)
     elif found_by == "Found (MD5)":
@@ -95,7 +92,15 @@ for image_file in list_of_images:
         if not args.no_rename:
             os.rename(file_path, os.path.join(folder_path, new_file_name))
             renamed_files.append((image_file, new_file_name))
-    print(f"\033[{31 if found_by == 'MISSING' else 33 if found_by == 'Found (MD5)' else 32}m{f'{(processed_count/total_files)*100:.2f}%':<6} {image_file:<36} {found_by:<14} {tag_string[:30]:<30}\033[0m")
+    if args.in_file:
+        write_to_exif(file_path, tag_string)
+    if args.in_txt:
+        write_to_txt(file_path, tag_string)
+    if tag_string:
+        tag_string = tag_string[:30]
+    else:
+        tag_string = ""
+    print(f"\033[{31 if found_by == 'MISSING' else 33 if found_by == 'Found (MD5)' else 32}m{f'{(processed_count/total_files)*100:.2f}%':<6} {image_file:<36} {found_by:<14} {tag_string:<30}\033[0m")
     processed_count += 1
 
 if not_found:
