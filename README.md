@@ -1,7 +1,7 @@
 # e621updater-python
 
 Initial release of e621updater rewritten in python.  
-This is a **BETA** release written mostly by OpenAI ChatGPT. It works, at least on my PC.  
+This script is mostly written by OpenAI ChatGPT. It works, at least on my PC.  
 There are a lot of things to improve in this code. Contributions are welcome.  
 
 You will also need exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder.  
@@ -38,7 +38,7 @@ usage: database.py [-h] [--proxy PROXY]
 Optionally, you can use a proxy:
 | Flag        | Description |
 |-------------|-------------|
-| `--proxy PROXY`  | The proxy to use for all network calls. Usage examples: http://proxy.server:8888 or http://user:password@proxy.server:8888 |
+| `-p PROXY`, `--proxy PROXY`  | The proxy to use for all network calls. Usage examples: http://proxy.server:8888 or http://user:password@proxy.server:8888 |
 
 > **Warning**
 > database.py downloads around 1GB of data from https://e621.net/db_export/ each time it's run.  
@@ -48,5 +48,3 @@ Around 400MB of files will be written to disk as a result (trimmed databases `po
 You don't need to update them unless you want to tag files added to e621 since the last time you've updated the database.  
 Tagger WILL NOT succeed without the correctly prepared databases in it's working folder.  
 It will also fail to find any files added after you've updated the database via database.py.
-
-
