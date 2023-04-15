@@ -18,8 +18,8 @@ usage: tagger.py [-h] [-f] [-t] [-p FOLDER_PATH] [-n]
 tagger.py SHOULD be run with `-f, --in-file` or `-t, --in-txt` command line arguments:
 | Flag        | Description |
 |-------------|-------------|
-| `-f`, `--in-file`  | Write the tags found in database to image EXIF |
-| `-t`, `--in-txt`    | Write the tags to sidecar txt files (useful for ML databases) |
+| `-f`, `--in-file`  | Write tags to image EXIF |
+| `-t`, `--in-txt`    | Write tags to sidecar txt files (useful for ML databases) |
 
 Optionally, you can use the following command-line flags:
 
