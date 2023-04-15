@@ -25,7 +25,7 @@ Optionally, you can use the following command-line flags:
 
 | Flag        | Description |
 |-------------|-------------|
-| `-p FOLDER_PATH`, `--folder-path FOLDER_PATH`  | Path to the folder containing the images, for example: F:\myfiles\test\ |
+| `-p FOLDER_PATH`, `--folder-path FOLDER_PATH`  | Path to the folder containing the images, for example: F:\myfiles\test\. If not set, will be selected via GUI. |
 | `-n`, `--no-rename`    | Do not rename the images if they are found by MD5 and not by name (you WON'T be able to tag them again) |
 
 > **Warning**
