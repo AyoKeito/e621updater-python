@@ -1,6 +1,6 @@
 # e621updater-python
 
-e621updater rewritten in python.  
+e621updater rewritten in Python.  
 This script is mostly written by OpenAI ChatGPT. It works, at least on my PC.  
 There are a lot of things to improve in this code. Contributions are welcome.  
 
