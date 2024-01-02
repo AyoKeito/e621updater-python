@@ -14,8 +14,8 @@ You can download the script in your Terminal:
 
 Or you can download a zip archive from Releases.
 
-## start.bat is included to simplify running the program under Windows:
-If needed, it creates a venv in the program's folder, installing needed requirements.  
+## start.bat is included to simplify running the script under Windows:
+If needed, it creates a venv in the script's folder, installing needed requirements.  
 After that, it simply runs both scripts using this venv. database.py will start first with `-m` flag. tagger.py will start after that, with `-f` flag.  
 If you need to add or change any flags, you can do that using Notepad.
 
