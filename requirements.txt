@@ -1,6 +1,6 @@
 aiohttp
-pandas
 pyarrow
 dask
 pyexiftool
-modin[ray]
+modin
+ray
