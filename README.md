@@ -40,7 +40,7 @@ Optionally, you can use the following command-line flags:
 | `-p FOLDER_PATH`, `--folder-path FOLDER_PATH`  | Path to the folder containing the images, for example: F:\myfiles\test\. If not set, will be selected via GUI. |
 | `-n`, `--no-rename`    | Do not rename the images if they are found by MD5 and not by name (you WON'T be able to tag them again) |
 
-> **Warning:**
+> [!IMPORTANT] 
 > tagger.py **requires** parquet database of e621 posts and an additional tag database to separate artists from other tags.
 
 ## This database is obtained by database.py:
@@ -54,7 +54,7 @@ Optionally, you can use these flags:
 | `-p PROXY`, `--proxy PROXY`  | The proxy to use for all network calls. Usage examples: http://proxy.server:8888 or http://user:password@proxy.server:8888 |
 | `-m`, `--multithreaded`  | Use Modin RAY engine for multithreaded operations on database. |
 
-> **Warning:**
+> [!CAUTION]  
 > database.py downloads around 1.1GB of data from https://e621.net/db_export/ each time it's run. You will be asked if you want to update the local database if it was downloaded before. If local database doesn't exist, it will be downloaded unconditionally.
 
 ~7.5GB of free RAM is required to run it.  
