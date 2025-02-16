@@ -6,8 +6,7 @@ There are a lot of things to improve in this code. Contributions are welcome.
 
 You will need exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder. It will be downloaded automatically if it doesn't exist. 
 
-Tested and working as python scripts via Python 3.10 and 3.11 and a bunch of dependencies listed in requirements.txt on Windows 10\11.  
-For Python 3.12, manual installation of Ray engine is required (as of 06/22/2024) before processing requirements.txt, see: https://github.com/ray-project/ray/issues/40211  
+Tested and working as python scripts via Python 3.10, 3.11 and 3.12, plus a bunch of dependencies listed in requirements.txt on Windows 10\11.  
 
 You can download the script in your Terminal:
 
