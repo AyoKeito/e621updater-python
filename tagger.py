@@ -48,9 +48,7 @@ def search_in_posts(file_name, file_md5, posts_df):
         #print("File:", file_name, " not found in the posts data")
         return None
 
-def write_to_exif(file_path, tag_string):
-    artists_df = pd.read_parquet("artists.parquet")
-    artists_list = artists_df['name'].tolist()
+def write_to_exif(file_path, tag_string, artists_list):
     subject_tags = []
     creator_tags = []
     tags = tag_string.split(", ")
@@ -93,6 +91,10 @@ print(f"Loading posts.parquet database...")
 
 posts_df = pd.read_parquet("posts.parquet")
 
+print(f"Loading artists.parquet database...")
+artists_df = pd.read_parquet("artists.parquet")
+artists_list = artists_df['name'].tolist()
+
 processed_count = 0
 not_found = []
 renamed_files = []
@@ -117,8 +119,8 @@ for image_file in list_of_images:
     else:
         found_by = "Found (NAME)"
         tag_string = tag_string.replace(" ", ", ")
-    if args.in_file:
-        write_to_exif(file_path, tag_string)
+    if args.in_file and tag_string != "MISSING":
+        write_to_exif(file_path, tag_string, artists_list)
     if args.in_txt:
         write_to_txt(file_path, tag_string)
     if found_by == "MISSING":
@@ -132,6 +134,9 @@ for image_file in list_of_images:
         else:
             #print("\033[33m{:<36} {:<12} {:<30}\033[0m".format(image_file, found_by, tag_string[:30]))
             print("\033[33m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", image_file, found_by, tag_string[:30]))
+            # Ensure we have the MD5 hash for renaming
+            if 'file_md5' not in locals():
+                file_md5 = calculate_md5(file_path)
             new_file_name = f"{file_md5}{file_extension}"
             os.rename(file_path, os.path.join(folder_path, new_file_name))
             renamed_files.append((image_file, new_file_name))
@@ -159,7 +164,8 @@ if len(not_found) > 0:
             print(f"Error moving file: {e}")
             # You can choose to overwrite the file if it already exists
             shutil.copy2(file_path, destination_path)
-            print(f"Overwritten: {file_path} -> {destination_path}")
+            os.remove(file_path)  # Remove original after successful copy
+            print(f"Copied and removed original: {file_path} -> {destination_path}")
 
 end_time = time.time()
 time_taken = end_time - start_time

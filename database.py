@@ -60,9 +60,13 @@ async def download_file(session, url, destination=None):
                 downloaded_size += len(chunk)
 
                 # Print the progress bar
-                percent = downloaded_size / total_size * 100
-                sys.stdout.write("\r[%-20s] %d%%" % ('=' * int(percent / 5), percent))
-                sys.stdout.flush()
+                if total_size > 0:
+                    percent = downloaded_size / total_size * 100
+                    sys.stdout.write("\r[%-20s] %d%%" % ('=' * int(percent / 5), percent))
+                    sys.stdout.flush()
+                else:
+                    sys.stdout.write(f"\rDownloaded: {downloaded_size} bytes")
+                    sys.stdout.flush()
 
             # Move to the next line after the progress bar
             print()
@@ -100,7 +104,11 @@ async def main(url, proxy, use_multithreaded=False):
                     content = await resp.text()
                     file_links = re.findall(r'<a href="(.*?)">', content)
                     # After finding the latest_posts link
-                    latest_posts_link = sorted([x for x in file_links if x.startswith("posts")], reverse=True)[0]
+                    posts_files = [x for x in file_links if x.startswith("posts")]
+                    if not posts_files:
+                        print("Error: No posts files found on the server.")
+                        return
+                    latest_posts_link = sorted(posts_files, reverse=True)[0]
 
                     # Escape special characters in the latest_posts_link
                     escaped_latest_posts_link = re.escape(latest_posts_link)
@@ -129,7 +137,10 @@ async def main(url, proxy, use_multithreaded=False):
                         update_choice = 'y'  # Set update_choice to 'y' to proceed with the update unconditionally
                     elif not database_updated:
                         # If the file exists but is outdated, prompt the user
-                        update_choice = input("\033[1mThe local database is outdated. Do you want to update? (Y/N):\033[0m ")
+                        update_choice = input("\033[1mThe local database is outdated. Do you want to update? (Y/N):\033[0m ").lower().strip()
+                        if update_choice not in ['y', 'yes', 'n', 'no']:
+                            print("Invalid input, defaulting to 'no'")
+                            update_choice = 'n'
                     else:
                         # If the file exists and is up-to-date, skip the update
                         print("Recent database, skipping downloads.")
@@ -174,9 +185,11 @@ async def main(url, proxy, use_multithreaded=False):
                         traceback.print_exc()
                         return
 
-                    content = await resp.text()
-                    file_links = re.findall(r'<a href="(.*?)">', content)
-                    latest_tags = sorted([x for x in file_links if x.startswith("tags")], reverse=True)[0]
+                    tags_files = [x for x in file_links if x.startswith("tags")]
+                    if not tags_files:
+                        print("Error: No tags files found on the server.")
+                        return
+                    latest_tags = sorted(tags_files, reverse=True)[0]
                     try:
                         print(f"\033[1mStep 6:\033[0m Downloading latest tags file {latest_tags}")
                         tags_content = gzip.decompress(await download_file(session, url + latest_tags)).decode()
