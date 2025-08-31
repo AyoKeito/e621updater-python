@@ -1,0 +1,4 @@
+venv/
+proxy.txt
+posts.parquet/
+artists.parquet

@@ -54,7 +54,7 @@ Optionally, you can use these flags:
 | `-m`, `--multithreaded`  | Use Modin RAY engine for multithreaded operations on database. |
 
 > [!CAUTION]  
-> database.py downloads around 1.1GB of data from https://e621.net/db_export/ each time it's run. You will be asked if you want to update the local database if it was downloaded before. If local database doesn't exist, it will be downloaded unconditionally.
+> database.py downloads around 1.6GB of data from https://e621.net/db_export/ each time it's run. You will be asked if you want to update the local database if it was downloaded before. If local database doesn't exist, it will be downloaded unconditionally.
 
 ~7.5GB of free RAM is required to run it.  
 Around 4GB of files will be written to disk as a result: trimmed databases `posts.parquet` and `artists.parquet` and a temporary `latest_posts.csv` file.  

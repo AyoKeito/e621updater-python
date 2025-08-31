@@ -2,7 +2,7 @@
 e621 tagger - database updater
 
 Author: AyoKeito
-Version: 1.1
+Version: 1.2
 GitHub: https://github.com/AyoKeito/e621updater-python
 """
 
@@ -24,6 +24,17 @@ parser = argparse.ArgumentParser(description="Download and process CSV files. Do
 parser.add_argument("--proxy", help="The proxy to use for all network calls (optional). Usage examples: http://proxy.server:8888 or http://user:password@proxy.server:8888")
 parser.add_argument("-m", "--multithreaded", action="store_true", help="Use Modin RAY engine for multithreaded operations on database.")
 args = parser.parse_args()
+
+# Check for proxy.txt file if no proxy argument provided
+if not args.proxy and os.path.exists("proxy.txt"):
+    try:
+        with open("proxy.txt", "r", encoding="utf-8") as f:
+            proxy_from_file = f.read().strip()
+            if proxy_from_file:
+                args.proxy = proxy_from_file
+                print(f"Using proxy from proxy.txt: {args.proxy}")
+    except Exception as e:
+        print(f"Warning: Could not read proxy.txt: {e}")
 
 if args.multithreaded:
     import ray

@@ -2,7 +2,7 @@
 e621 tagger
 
 Author: AyoKeito
-Version: 1.1
+Version: 1.2
 GitHub: https://github.com/AyoKeito/e621updater-python
 
 Let's tag your yiff!
@@ -83,6 +83,19 @@ if args.folder_path:
     folder_path = args.folder_path
 else:
     folder_path = select_folder()
+
+# Validate folder path
+if not folder_path or folder_path.strip() == "":
+    print("Error: No folder selected. Exiting.")
+    exit(1)
+
+if not os.path.exists(folder_path):
+    print(f"Error: The specified folder does not exist: {folder_path}")
+    exit(1)
+
+if not os.path.isdir(folder_path):
+    print(f"Error: The specified path is not a folder: {folder_path}")
+    exit(1)
 
 list_of_images = build_list_of_images(folder_path)
 
