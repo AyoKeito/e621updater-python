@@ -51,15 +51,15 @@ def search_in_posts(file_name, file_md5, posts_df):
 def write_to_exif(file_path, tag_string, artists_list):
     subject_tags = []
     creator_tags = []
-    tags = tag_string.split(", ")
+    tags = tag_string.split("; ")
     trash_tags = ["conditional_dnp", "avoid_posting", "unknown_artist", "absurd_res", "hi_res", "digital_media_(artwork)", "traditional_media_(artwork)"]
     for tag in tags:
         if tag in artists_list:
             creator_tags.append(tag)
         elif tag not in trash_tags:
             subject_tags.append(tag)
-    subject_tags = ", ".join(subject_tags)
-    creator_tags = ", ".join(creator_tags)
+    subject_tags = "; ".join(subject_tags)
+    creator_tags = "; ".join(creator_tags)
     with exiftool.ExifTool() as et:
         et.execute(f"-xmp-dc:subject={subject_tags}", "-overwrite_original_in_place", file_path)
         et.execute(f"-xmp-dc:creator={creator_tags}", "-overwrite_original_in_place", file_path)
@@ -125,13 +125,13 @@ for image_file in list_of_images:
         tag_string = search_in_posts(None, file_md5, posts_df)
         if tag_string is not None:
             found_by = "Found (MD5)"
-            tag_string = tag_string.replace(" ", ", ")
+            tag_string = tag_string.replace(" ", "; ")
         else:
             tag_string = "MISSING"
             found_by = "MISSING"
     else:
         found_by = "Found (NAME)"
-        tag_string = tag_string.replace(" ", ", ")
+        tag_string = tag_string.replace(" ", "; ")
     if args.in_file and tag_string != "MISSING":
         write_to_exif(file_path, tag_string, artists_list)
     if args.in_txt:
