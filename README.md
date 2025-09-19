@@ -6,7 +6,23 @@ Contributions and improvements are welcome.
 
 You will need exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder. It will be downloaded automatically if it doesn't exist. 
 
-Tested and working with Python 3.10, 3.11, and 3.12, along with the dependencies listed in requirements.txt on Windows 10/11.  
+Tested and working with Python 3.10, 3.11, and 3.12, along with the dependencies listed in requirements.txt on Windows 10/11.
+
+## Quick Start
+
+1. Download and extract the project
+2. Run `start.bat` (Windows) or install dependencies with `pip install -r requirements.txt`
+3. Wait for database download (~1.6GB) and processing (~10-15 minutes)
+4. Select your image folder when prompted
+5. Images will be automatically tagged with e621 metadata
+
+## Prerequisites
+
+- **Python**: 3.10, 3.11, or 3.12
+- **Operating System**: Windows 10/11 (tested)
+- **RAM**: ~7.5GB free memory for database processing
+- **Storage**: ~5GB free space for database files
+- **Internet**: Stable connection for initial 1.6GB download
 
 ## Installation
 
@@ -57,7 +73,7 @@ Optionally, you can use these flags:
 | `-m`, `--multithreaded`  | Use Modin RAY engine for multithreaded operations on database. |
 
 > [!CAUTION]  
-> database.py downloads around 1.1GB of data from https://e621.net/db_export/ each time it's run. You will be asked if you want to update the local database if it was downloaded before. If local database doesn't exist, it will be downloaded unconditionally.
+> database.py downloads around 1.6GB of data from https://e621.net/db_export/ each time it's run. You will be asked if you want to update the local database if it was downloaded before. If local database doesn't exist, it will be downloaded unconditionally.
 
 ~7.5GB of free RAM is required to run it.  
 Around 4GB of files will be written to disk as a result: trimmed databases `posts.parquet` and `artists.parquet` and a temporary `latest_posts.csv` file.  
@@ -66,3 +82,55 @@ Tagger WILL NOT succeed without the correctly prepared databases in its working 
 It will also fail to find any files uploaded to e621 after you've last updated the database via database.py.
 
 If you have any problems running Modin/Ray with `-m` flag, simply remove it. If you want to avoid using temporary files for any reason, you can remove this flag and avoid 3GB of `latest_posts.csv` written to disk.
+
+## Examples
+
+### Basic Usage
+```bash
+# Download/update database (run first)
+python database.py
+
+# Tag images with EXIF metadata (recommended)
+python tagger.py -f
+
+# Tag images with sidecar txt files
+python tagger.py -t
+```
+
+### Advanced Usage
+```bash
+# Use proxy for database download
+python database.py -p http://proxy.server:8888
+
+# Use multithreading (requires 7.5GB RAM)
+python database.py -m
+
+# Tag specific folder without renaming files
+python tagger.py -f -p "C:\My Images" -n
+
+# Create txt files for machine learning datasets
+python tagger.py -t -p "C:\ML Dataset"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**"No database files found"**
+- Run `python database.py` first to download the e621 database
+
+**"Out of memory" during database processing**
+- Close other applications to free up RAM
+- Remove `-m` flag to use less memory (slower processing)
+
+**"No images found" or "No tags applied"**
+- Ensure images have MD5 hashes that match e621 posts
+- Images must be uploaded to e621 before your last database update
+
+**Proxy connection issues**
+- Verify proxy URL format: `http://proxy.server:port`
+- Try creating `proxy.txt` file with proxy URL instead of using `-p` flag
+
+**ExifTool errors**
+- Ensure `exiftool.exe` is in the working directory (auto-downloaded)
+- Try running as administrator if file permission errors occur
