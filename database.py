@@ -44,8 +44,10 @@ if args.multithreaded:
 def check_database_update(web_date):
     if os.path.exists("artists.parquet"):
         modification_time = os.path.getmtime("artists.parquet")
-        modification_datetime = dt.datetime.utcfromtimestamp(modification_time)
-        web_datetime = dt.datetime.strptime(web_date, '%d-%b-%Y %H:%M')
+        # Replaced dt.datetime.utcfromtimestamp(modification_time) with dt.datetime.fromtimestamp(modification_time, tz=dt.timezone.utc) to create an offset-aware datetime in UTC.
+        modification_datetime = dt.datetime.fromtimestamp(modification_time, tz=dt.timezone.utc)
+        # Added replace(tzinfo=dt.timezone.utc) to the web_datetime to ensure it is also offset-aware in UTC.
+        web_datetime = dt.datetime.strptime(web_date, '%d-%b-%Y %H:%M').replace(tzinfo=dt.timezone.utc)
 
         print(f"Local posts database date: \033[96m{modification_datetime.strftime('%d-%b-%Y %H:%M')}\033[0m")
 
@@ -236,3 +238,4 @@ try:
 except Exception as e:
     print("An unexpected error occurred:", e)
     traceback.print_exc()
+
