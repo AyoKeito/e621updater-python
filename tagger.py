@@ -2,7 +2,7 @@
 e621 tagger
 
 Author: AyoKeito
-Version: 1.2
+Version: 1.3
 GitHub: https://github.com/AyoKeito/e621updater-python
 
 Let's tag your yiff!
@@ -60,7 +60,8 @@ def write_to_exif(file_path, tag_string, artists_list):
             subject_tags.append(tag)
     subject_tags = "; ".join(subject_tags)
     creator_tags = "; ".join(creator_tags)
-    with exiftool.ExifTool() as et:
+    exiftool_path = os.path.abspath("exiftool.exe")
+    with exiftool.ExifTool(exiftool_path) as et:
         et.execute(f"-xmp-dc:subject={subject_tags}", "-overwrite_original_in_place", file_path)
         et.execute(f"-xmp-dc:creator={creator_tags}", "-overwrite_original_in_place", file_path)
 

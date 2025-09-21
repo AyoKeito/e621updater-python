@@ -12,7 +12,7 @@ if not exist .\venv\ (
 
 call .\venv\Scripts\activate
 echo Downloading databases:
-.\venv\Scripts\python.exe database.py -m
+.\venv\Scripts\python.exe database.py
 echo Running tagger:
 .\venv\Scripts\python.exe tagger.py -f
 

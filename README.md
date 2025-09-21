@@ -4,7 +4,7 @@
 This script provides automated tagging of local images using the e621 database. It works reliably on Windows systems.
 Contributions and improvements are welcome.  
 
-You will need exiftool.exe (https://www.sno.phy.queensu.ca/~phil/exiftool/) in the working folder. It will be downloaded automatically if it doesn't exist. 
+You will need exiftool.exe (https://sourceforge.net/projects/exiftool/files/) in the working folder. It will be downloaded automatically if it doesn't exist. 
 
 Tested and working with Python 3.10, 3.11, and 3.12, along with the dependencies listed in requirements.txt on Windows 10/11.
 

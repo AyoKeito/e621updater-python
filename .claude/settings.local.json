@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(venv/Scripts/python.exe analyze_file.py:*)",
+      "Bash(venv/Scripts/python.exe optimize_test.py:*)",
+      "Bash(venv/Scripts/python.exe:*)",
+      "WebFetch(domain:sourceforge.net)",
+      "Bash(./exiftool.exe -ver)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

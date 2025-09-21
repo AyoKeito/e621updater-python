@@ -1,4 +1,7 @@
 venv/
 proxy.txt
-posts.parquet/
+posts.parquet
 artists.parquet
+exiftool_files/
+exiftool.exe
+testing/

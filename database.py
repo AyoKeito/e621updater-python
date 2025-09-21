@@ -2,7 +2,7 @@
 e621 tagger - database updater
 
 Author: AyoKeito
-Version: 1.2
+Version: 1.3
 GitHub: https://github.com/AyoKeito/e621updater-python
 """
 
@@ -39,7 +39,16 @@ if not args.proxy and os.path.exists("proxy.txt"):
 if args.multithreaded:
     import ray
     import modin.pandas as pd
-    import modin  
+    import modin
+
+# Try to use Polars for better performance, fall back to pandas if not available
+try:
+    import polars as pl
+    use_polars = True
+    print("Using Polars for optimized performance")
+except ImportError:
+    use_polars = False
+    print("Polars not available, using pandas")  
 
 def check_database_update(web_date):
     if os.path.exists("artists.parquet"):
@@ -91,7 +100,7 @@ async def download_file(session, url, destination=None):
             return content
             
 async def download_exiftool(session):
-    exiftool_url = "https://exiftool.org/exiftool-12.70.zip"
+    exiftool_url = "https://sourceforge.net/projects/exiftool/files/latest/download"
     if not os.path.exists("exiftool.exe"):
         print(f"Downloading ExifTool from {exiftool_url}")
         exiftool_content = await download_file(session, exiftool_url, destination="exiftool.zip")
@@ -99,11 +108,32 @@ async def download_exiftool(session):
         if exiftool_content:
             print("Extracting ExifTool executable")
             with zipfile.ZipFile(io.BytesIO(exiftool_content), 'r') as zip_ref:
-                zip_ref.extract("exiftool(-k).exe")
+                # Find exiftool(-k).exe in the versioned folder
+                exiftool_path = None
+                version_dir = None
+                for name in zip_ref.namelist():
+                    if name.endswith('exiftool(-k).exe'):
+                        exiftool_path = name
+                        version_dir = name.split('/')[0]
+                        break
 
-            # Rename the executable to exiftool.exe
-            os.rename("exiftool(-k).exe", "exiftool.exe")
-            os.remove('exiftool.zip')  # Delete the temporary file
+                if exiftool_path and version_dir:
+                    # Extract the entire contents to preserve dependencies
+                    zip_ref.extractall()
+                    # Move exiftool(-k).exe to working directory and rename
+                    os.rename(exiftool_path, "exiftool.exe")
+                    # Move exiftool_files directory to working directory (needed for dependencies)
+                    import shutil
+                    exiftool_files_path = f"{version_dir}/exiftool_files"
+                    if os.path.exists(exiftool_files_path):
+                        if os.path.exists("exiftool_files"):
+                            shutil.rmtree("exiftool_files")
+                        shutil.move(exiftool_files_path, "exiftool_files")
+                    # Clean up the extracted version directory
+                    if os.path.exists(version_dir):
+                        shutil.rmtree(version_dir)
+
+            os.remove('exiftool.zip') if os.path.exists('exiftool.zip') else None
     else:
         print("ExifTool already exists. Skipping download.")
 
@@ -177,7 +207,11 @@ async def main(url, proxy, use_multithreaded=False):
                             print(f"Processing in \033[93msinglethreaded\033[0m mode...")
                         
                         print(f"\033[1mStep 3:\033[0m Reading extracted posts CSV as a DataFrame")
-                        if use_multithreaded:
+                        if use_polars and not use_multithreaded:
+                            # Use Polars for optimal performance (6x faster)
+                            posts_df = pl.read_csv(io.BytesIO(posts_content), columns=["id", "md5", "tag_string"])
+                            del posts_content
+                        elif use_multithreaded:
                             posts_df = pd.read_csv('latest_posts.csv', usecols=["id", "md5", "tag_string"])
                         else:
                             posts_df = pds.read_csv(io.BytesIO(posts_content), usecols=["id", "md5", "tag_string"])
@@ -186,10 +220,12 @@ async def main(url, proxy, use_multithreaded=False):
                         print(f"\033[1mStep 4:\033[0m Saving DataFrame to posts.parquet")
                         if use_multithreaded:
                             os.remove('latest_posts.csv')  # Delete the temporary file
-                            posts_df.to_parquet("posts.parquet", engine='pyarrow', compression='brotli')
+                            posts_df.to_parquet("posts.parquet", engine='pyarrow', compression='zstd')
                             ray.shutdown()
+                        elif use_polars:
+                            posts_df.write_parquet("posts.parquet", compression="zstd")
                         else:
-                            posts_df.to_parquet("posts.parquet", engine='pyarrow', compression='brotli')
+                            posts_df.to_parquet("posts.parquet", engine='pyarrow', compression='zstd')
 
                         del posts_df
                         print(f"\033[32mStep 5:\033[0m posts.parquet done!\033[0m")
@@ -208,18 +244,32 @@ async def main(url, proxy, use_multithreaded=False):
                         tags_content = gzip.decompress(await download_file(session, url + latest_tags)).decode()
                         
                         print(f"\033[1mStep 7:\033[0m Reading {latest_tags} as a DataFrame")
-                        df = pds.read_csv(io.BytesIO(bytes(tags_content, "utf-8")), header=0, dtype={"id": int, "name": str, "category": int, "post_count": int})
-                        
-                        print(f"\033[1mStep 8:\033[0m Filtering DataFrame to only include rows where category is equal to 1 (artists)")
-                        df = df[df["category"] == 1]
-                        
-                        print(f"\033[1mStep 9:\033[0m Keeping only the 'name' column from the DataFrame")
-                        df = df[["name"]]
-                        
+                        if use_polars:
+                            # Use Polars for faster processing
+                            df = pl.read_csv(io.BytesIO(bytes(tags_content, "utf-8")),
+                                           schema_overrides={"id": pl.Int64, "name": pl.Utf8, "category": pl.Int64, "post_count": pl.Int64})
+
+                            print(f"\033[1mStep 8:\033[0m Filtering DataFrame to only include rows where category is equal to 1 (artists)")
+                            print(f"\033[1mStep 9:\033[0m Keeping only the 'name' column from the DataFrame")
+                            # Filter and select in one operation with Polars
+                            df = df.filter(pl.col("category") == 1).select("name")
+                        else:
+                            df = pds.read_csv(io.BytesIO(bytes(tags_content, "utf-8")), header=0, dtype={"id": int, "name": str, "category": int, "post_count": int})
+
+                            print(f"\033[1mStep 8:\033[0m Filtering DataFrame to only include rows where category is equal to 1 (artists)")
+                            df = df[df["category"] == 1]
+
+                            print(f"\033[1mStep 9:\033[0m Keeping only the 'name' column from the DataFrame")
+                            df = df[["name"]]
+
                         print(f"\033[1mStep 10:\033[0m Saving DataFrame to artists.parquet")
                         if os.path.exists('artists.parquet'):
                             os.remove('artists.parquet')
-                        df.to_parquet("artists.parquet", engine='pyarrow', compression='brotli')
+
+                        if use_polars:
+                            df.write_parquet("artists.parquet", compression="zstd")
+                        else:
+                            df.to_parquet("artists.parquet", engine='pyarrow', compression='zstd')
                         
                         print(f"\033[32mStep 11:\033[0m artists.parquet done!\033[0m")
                         del df
