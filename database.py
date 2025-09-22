@@ -189,6 +189,11 @@ async def main(url, proxy, use_multithreaded=False):
                         print("Recent database, skipping downloads.")
                         return
 
+                    # Check if user wants to proceed with the update
+                    if update_choice in ['n', 'no']:
+                        print("Database update skipped by user choice.")
+                        return
+
                     # Continue with the update process
                     try:
                         print(f"\033[1mStep 2:\033[0m Downloading \033[96m{latest_posts_link}\033[0m")
