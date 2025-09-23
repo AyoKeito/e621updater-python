@@ -17,9 +17,17 @@ from tkinter.filedialog import askdirectory
 import exiftool
 import shutil
 import time
+from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn, TimeElapsedColumn
+from rich.console import Console
 
 # Optimized file extension checking
 SUPPORTED_EXTENSIONS = {'.png', '.jpg', '.jpeg'}
+
+def crop_filename(filename, max_length=36):
+    """Crop filename to specified length, adding ellipsis if needed"""
+    if len(filename) <= max_length:
+        return filename
+    return filename[:max_length-3] + "..."
 
 def select_folder():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
@@ -159,84 +167,106 @@ renamed_files = []
 
 total_files = len(list_of_images)
 
+# Initialize Rich console and progress display
+console = Console()
+
+# Create clean progress bar
+progress = Progress(
+    TextColumn("[bold blue]Processing files", justify="right"),
+    BarColumn(bar_width=40),
+    "[progress.percentage]{task.percentage:>3.1f}%",
+    "•",
+    TextColumn("[bold green]{task.completed}/{task.total}"),
+    "•",
+    TimeElapsedColumn(),
+    "•",
+    TimeRemainingColumn(),
+    console=console,
+    transient=False
+)
+
 print("{:<6} {:<36} {:<14} {:<30}".format("%", "Name", "Found/Missing", "Tags"))
-for image_file in list_of_images:
-    file_path = os.path.join(folder_path, image_file)
-    file_name_without_extension, file_extension = os.path.splitext(image_file)
 
-    # Try filename lookup first using optimized dictionary
-    tag_string = search_in_posts(file_name_without_extension, None, md5_to_tags)
-    found_by = "Found (NAME)"
-    file_md5 = None
+with progress:
+    task = progress.add_task("processing", total=total_files)
 
-    if tag_string is None:
-        # Calculate MD5 with caching and try MD5 lookup
-        file_md5 = calculate_md5_cached(file_path, md5_cache)
-        tag_string = search_in_posts(None, file_md5, md5_to_tags)
-        if tag_string is not None:
-            found_by = "Found (MD5)"
-            tag_string = tag_string.replace(" ", "; ")
+    for image_file in list_of_images:
+        file_path = os.path.join(folder_path, image_file)
+        file_name_without_extension, file_extension = os.path.splitext(image_file)
+
+        # Try filename lookup first using optimized dictionary
+        tag_string = search_in_posts(file_name_without_extension, None, md5_to_tags)
+        file_md5 = None
+
+        if tag_string is None:
+            # Calculate MD5 with caching and try MD5 lookup
+            file_md5 = calculate_md5_cached(file_path, md5_cache)
+            tag_string = search_in_posts(None, file_md5, md5_to_tags)
+            if tag_string is not None:
+                found_by = "Found (MD5)"
+                tag_string = tag_string.replace(" ", "; ")
+            else:
+                tag_string = "MISSING"
+                found_by = "MISSING"
         else:
-            tag_string = "MISSING"
-            found_by = "MISSING"
-    else:
-        found_by = "Found (NAME)"
-        tag_string = tag_string.replace(" ", "; ")
+            found_by = "Found (NAME)"
+            tag_string = tag_string.replace(" ", "; ")
 
-    # Write tags using optimized functions
-    if args.in_file and tag_string != "MISSING":
-        write_to_exif(file_path, tag_string, artists_set)
-    if args.in_txt:
-        write_to_txt(file_path, tag_string)
+        # Write tags using optimized functions
+        if args.in_file and tag_string != "MISSING":
+            write_to_exif(file_path, tag_string, artists_set)
+        if args.in_txt:
+            write_to_txt(file_path, tag_string)
 
-    # Handle results and display progress
-    if found_by == "MISSING":
-        print("\033[31m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", image_file, found_by, tag_string[:30]))
-        not_found.append(file_path)
-    elif found_by == "Found (MD5)":
-        print("\033[33m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", image_file, found_by, tag_string[:30]))
-        if not args.no_rename:
-            # Use cached MD5 for renaming (we already calculated it)
-            new_file_name = f"{file_md5}{file_extension}"
-            new_file_path = os.path.join(folder_path, new_file_name)
+        # Handle results and display progress
+        if found_by == "MISSING":
+            print("\033[31m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", crop_filename(image_file), found_by, tag_string[:30]))
+            not_found.append(file_path)
+        elif found_by == "Found (MD5)":
+            print("\033[33m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", crop_filename(image_file), found_by, tag_string[:30]))
+            if not args.no_rename:
+                # Use cached MD5 for renaming (we already calculated it)
+                new_file_name = f"{file_md5}{file_extension}"
+                new_file_path = os.path.join(folder_path, new_file_name)
 
-            # Handle file collision - if target file already exists
-            if os.path.exists(new_file_path):
-                # Check if it's the same file (already correctly named)
-                if os.path.samefile(file_path, new_file_path):
-                    # File is already correctly named, nothing to do
-                    pass
+                # Handle file collision - if target file already exists
+                if os.path.exists(new_file_path):
+                    # Check if it's the same file (already correctly named)
+                    if os.path.samefile(file_path, new_file_path):
+                        # File is already correctly named, nothing to do
+                        pass
+                    else:
+                        # Target filename exists but is a different file
+                        # Add a counter to make the filename unique
+                        base_name = file_md5
+                        counter = 1
+                        while os.path.exists(new_file_path):
+                            new_file_name = f"{base_name}_{counter}{file_extension}"
+                            new_file_path = os.path.join(folder_path, new_file_name)
+                            counter += 1
+
+                        try:
+                            os.rename(file_path, new_file_path)
+                            renamed_files.append((image_file, new_file_name))
+                        except OSError as e:
+                            print(f"Warning: Could not rename {image_file} to {new_file_name}: {e}")
                 else:
-                    # Target filename exists but is a different file
-                    # Add a counter to make the filename unique
-                    base_name = file_md5
-                    counter = 1
-                    while os.path.exists(new_file_path):
-                        new_file_name = f"{base_name}_{counter}{file_extension}"
-                        new_file_path = os.path.join(folder_path, new_file_name)
-                        counter += 1
-
+                    # Target doesn't exist, safe to rename
                     try:
                         os.rename(file_path, new_file_path)
                         renamed_files.append((image_file, new_file_name))
                     except OSError as e:
                         print(f"Warning: Could not rename {image_file} to {new_file_name}: {e}")
-            else:
-                # Target doesn't exist, safe to rename
-                try:
-                    os.rename(file_path, new_file_path)
-                    renamed_files.append((image_file, new_file_name))
-                except OSError as e:
-                    print(f"Warning: Could not rename {image_file} to {new_file_name}: {e}")
-    else:  # Found (NAME)
-        print("\033[32m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", image_file, found_by, tag_string[:30]))
+        else:  # Found (NAME)
+            print("\033[32m{:<6} {:<36} {:<14} {:<30}\033[0m".format(f"{(processed_count/total_files)*100:.2f}%", crop_filename(image_file), found_by, tag_string[:30]))
 
-    processed_count += 1
+        processed_count += 1
+        progress.update(task, advance=1)
 
 if len(not_found) == 0:
-    print("Processed image", processed_count, "of", len(list_of_images), "\n", "All files are found")
+    print("Processed", processed_count, "images\nAll files are found")
 else:
-    print("Processed image", processed_count, "of", len(list_of_images), "\n", len(not_found), "files are not found")
+    print("Processed", processed_count, "images\n", len(not_found), "files are not found")
 
 if len(not_found) > 0:
     not_found_directory = os.path.join(folder_path, "NotFound")

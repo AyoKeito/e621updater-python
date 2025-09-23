@@ -6,3 +6,4 @@ pyexiftool
 modin
 ray
 psutil
+rich
