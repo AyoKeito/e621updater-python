@@ -19,6 +19,8 @@ import traceback
 import time
 import datetime as dt
 import sys
+from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn, TimeElapsedColumn, DownloadColumn, TransferSpeedColumn
+from rich.console import Console
 
 parser = argparse.ArgumentParser(description="Download and process CSV files. Download gz archives, extract & filter irrelevant data, and save as compressed parquet files.")
 parser.add_argument("--proxy", help="The proxy to use for all network calls (optional). Usage examples: http://proxy.server:8888 or http://user:password@proxy.server:8888")
@@ -70,28 +72,45 @@ def check_database_update(web_date):
 
     return False
 
-async def download_file(session, url, destination=None):
+async def download_file(session, url, destination=None, progress_bar=None, task_id=None, description="Downloading"):
     async with session.get(url, headers={'User-Agent': 'e621 tagger'}, proxy=args.proxy) as resp:
         if resp.status == 200:
             total_size = int(resp.headers.get('content-length', 0))
             content = bytearray()
-            downloaded_size = 0
 
-            async for chunk in resp.content.iter_any():
-                content.extend(chunk)
-                downloaded_size += len(chunk)
+            # Use provided progress bar or create a simple one
+            if progress_bar and task_id is not None:
+                # Update the existing task with total size and description
+                progress_bar.update(task_id, total=total_size, description=description)
 
-                # Print the progress bar
-                if total_size > 0:
-                    percent = downloaded_size / total_size * 100
-                    sys.stdout.write("\r[%-20s] %d%%" % ('=' * int(percent / 5), percent))
-                    sys.stdout.flush()
-                else:
-                    sys.stdout.write(f"\rDownloaded: {downloaded_size} bytes")
-                    sys.stdout.flush()
+                async for chunk in resp.content.iter_any():
+                    content.extend(chunk)
+                    chunk_size = len(chunk)
+                    progress_bar.update(task_id, advance=chunk_size)
+            else:
+                # Fallback: create simple progress bar for standalone downloads
+                progress = Progress(
+                    TextColumn("[bold blue]Downloading", justify="right"),
+                    BarColumn(bar_width=40),
+                    "[progress.percentage]{task.percentage:>3.1f}%",
+                    "•",
+                    DownloadColumn(),
+                    "•",
+                    TransferSpeedColumn(),
+                    console=Console(),
+                    transient=False
+                )
 
-            # Move to the next line after the progress bar
-            print()
+                with progress:
+                    if total_size > 0:
+                        task = progress.add_task("download", total=total_size)
+                    else:
+                        task = progress.add_task("download", total=None)
+
+                    async for chunk in resp.content.iter_any():
+                        content.extend(chunk)
+                        chunk_size = len(chunk)
+                        progress.update(task, advance=chunk_size)
 
             if destination:
                 with open(destination, 'wb') as f:
@@ -196,41 +215,63 @@ async def main(url, proxy, use_multithreaded=False):
 
                     # Continue with the update process
                     try:
-                        print(f"\033[1mStep 2:\033[0m Downloading \033[96m{latest_posts_link}\033[0m")
-                        start_time = time.time()
-                        posts_content = gzip.decompress(await download_file(session, url + latest_posts_link))
-                        end_time = time.time()
-                        time_taken = end_time - start_time
-                        print(f"Downloaded {latest_posts_link} in {time_taken:.2f} seconds.")
-                        if use_multithreaded:
-                            with open('latest_posts.csv', 'wb') as f:
-                                f.write(posts_content)
-                            del posts_content
-                            print(f"Processing in \033[92mmultithreaded\033[0m mode, \033[92m{modin.config.NPartitions.get()}\033[0m threads detected, initializing Modin RAY engine...")
-                            ray.init()
-                        else:
-                            print(f"Processing in \033[93msinglethreaded\033[0m mode...")
-                        
-                        print(f"\033[1mStep 3:\033[0m Reading extracted posts CSV as a DataFrame")
-                        if use_polars and not use_multithreaded:
-                            # Use Polars for optimal performance (6x faster)
-                            posts_df = pl.read_csv(io.BytesIO(posts_content), columns=["id", "md5", "tag_string"])
-                            del posts_content
-                        elif use_multithreaded:
-                            posts_df = pd.read_csv('latest_posts.csv', usecols=["id", "md5", "tag_string"])
-                        else:
-                            posts_df = pds.read_csv(io.BytesIO(posts_content), usecols=["id", "md5", "tag_string"])
-                            del posts_content
+                        # Create unified progress bar for all operations
+                        main_progress = Progress(
+                            TextColumn("[bold cyan]{task.description}", justify="right"),
+                            BarColumn(bar_width=40),
+                            "[progress.percentage]{task.percentage:>3.1f}%",
+                            "•",
+                            DownloadColumn(),
+                            "•",
+                            TransferSpeedColumn(),
+                            "•",
+                            TimeRemainingColumn(),
+                            console=Console(),
+                            transient=False
+                        )
 
-                        print(f"\033[1mStep 4:\033[0m Saving DataFrame to posts.parquet")
-                        if use_multithreaded:
-                            os.remove('latest_posts.csv')  # Delete the temporary file
-                            posts_df.to_parquet("posts.parquet", engine='pyarrow', compression='zstd')
-                            ray.shutdown()
-                        elif use_polars:
-                            posts_df.write_parquet("posts.parquet", compression="zstd")
-                        else:
-                            posts_df.to_parquet("posts.parquet", engine='pyarrow', compression='zstd')
+                        with main_progress:
+                            print(f"\033[1mStep 2:\033[0m Downloading \033[96m{latest_posts_link}\033[0m")
+                            start_time = time.time()
+
+                            # Create download task
+                            download_task = main_progress.add_task("Downloading posts database...", total=None)
+                            posts_content = gzip.decompress(await download_file(session, url + latest_posts_link,
+                                                                               progress_bar=main_progress, task_id=download_task))
+
+                            end_time = time.time()
+                            time_taken = end_time - start_time
+                            print(f"Downloaded {latest_posts_link} in {time_taken:.2f} seconds.")
+
+                            if use_multithreaded:
+                                with open('latest_posts.csv', 'wb') as f:
+                                    f.write(posts_content)
+                                del posts_content
+                                print(f"Processing in \033[92mmultithreaded\033[0m mode, \033[92m{modin.config.NPartitions.get()}\033[0m threads detected, initializing Modin RAY engine...")
+                                ray.init()
+                            else:
+                                print(f"Processing in \033[93msinglethreaded\033[0m mode...")
+
+                            print(f"\033[1mStep 3:\033[0m Reading extracted posts CSV as a DataFrame")
+                            if use_polars and not use_multithreaded:
+                                # Use Polars for optimal performance (6x faster)
+                                posts_df = pl.read_csv(io.BytesIO(posts_content), columns=["id", "md5", "tag_string"])
+                                del posts_content
+                            elif use_multithreaded:
+                                posts_df = pd.read_csv('latest_posts.csv', usecols=["id", "md5", "tag_string"])
+                            else:
+                                posts_df = pds.read_csv(io.BytesIO(posts_content), usecols=["id", "md5", "tag_string"])
+                                del posts_content
+
+                            print(f"\033[1mStep 4:\033[0m Saving DataFrame to posts.parquet")
+                            if use_multithreaded:
+                                os.remove('latest_posts.csv')  # Delete the temporary file
+                                posts_df.to_parquet("posts.parquet", engine='pyarrow', compression='zstd')
+                                ray.shutdown()
+                            elif use_polars:
+                                posts_df.write_parquet("posts.parquet", compression="zstd")
+                            else:
+                                posts_df.to_parquet("posts.parquet", engine='pyarrow', compression='zstd')
 
                         del posts_df
                         print(f"\033[32mStep 5:\033[0m posts.parquet done!\033[0m")
@@ -245,37 +286,57 @@ async def main(url, proxy, use_multithreaded=False):
                         return
                     latest_tags = sorted(tags_files, reverse=True)[0]
                     try:
-                        print(f"\033[1mStep 6:\033[0m Downloading latest tags file {latest_tags}")
-                        tags_content = gzip.decompress(await download_file(session, url + latest_tags)).decode()
-                        
-                        print(f"\033[1mStep 7:\033[0m Reading {latest_tags} as a DataFrame")
-                        if use_polars:
-                            # Use Polars for faster processing
-                            df = pl.read_csv(io.BytesIO(bytes(tags_content, "utf-8")),
-                                           schema_overrides={"id": pl.Int64, "name": pl.Utf8, "category": pl.Int64, "post_count": pl.Int64})
+                        # Create unified progress bar for tags operations
+                        tags_progress = Progress(
+                            TextColumn("[bold cyan]{task.description}", justify="right"),
+                            BarColumn(bar_width=40),
+                            "[progress.percentage]{task.percentage:>3.1f}%",
+                            "•",
+                            DownloadColumn(),
+                            "•",
+                            TransferSpeedColumn(),
+                            "•",
+                            TimeRemainingColumn(),
+                            console=Console(),
+                            transient=False
+                        )
 
-                            print(f"\033[1mStep 8:\033[0m Filtering DataFrame to only include rows where category is equal to 1 (artists)")
-                            print(f"\033[1mStep 9:\033[0m Keeping only the 'name' column from the DataFrame")
-                            # Filter and select in one operation with Polars
-                            df = df.filter(pl.col("category") == 1).select("name")
-                        else:
-                            df = pds.read_csv(io.BytesIO(bytes(tags_content, "utf-8")), header=0, dtype={"id": int, "name": str, "category": int, "post_count": int})
+                        with tags_progress:
+                            print(f"\033[1mStep 6:\033[0m Downloading latest tags file {latest_tags}")
 
-                            print(f"\033[1mStep 8:\033[0m Filtering DataFrame to only include rows where category is equal to 1 (artists)")
-                            df = df[df["category"] == 1]
+                            # Create download task for tags
+                            tags_download_task = tags_progress.add_task("Downloading tags database...", total=None)
+                            tags_content = gzip.decompress(await download_file(session, url + latest_tags,
+                                                                              progress_bar=tags_progress, task_id=tags_download_task)).decode()
 
-                            print(f"\033[1mStep 9:\033[0m Keeping only the 'name' column from the DataFrame")
-                            df = df[["name"]]
+                            print(f"\033[1mStep 7:\033[0m Reading {latest_tags} as a DataFrame")
+                            if use_polars:
+                                # Use Polars for faster processing
+                                df = pl.read_csv(io.BytesIO(bytes(tags_content, "utf-8")),
+                                               schema_overrides={"id": pl.Int64, "name": pl.Utf8, "category": pl.Int64, "post_count": pl.Int64})
 
-                        print(f"\033[1mStep 10:\033[0m Saving DataFrame to artists.parquet")
-                        if os.path.exists('artists.parquet'):
-                            os.remove('artists.parquet')
+                                print(f"\033[1mStep 8:\033[0m Filtering DataFrame to only include rows where category is equal to 1 (artists)")
+                                print(f"\033[1mStep 9:\033[0m Keeping only the 'name' column from the DataFrame")
+                                # Filter and select in one operation with Polars
+                                df = df.filter(pl.col("category") == 1).select("name")
+                            else:
+                                df = pds.read_csv(io.BytesIO(bytes(tags_content, "utf-8")), header=0, dtype={"id": int, "name": str, "category": int, "post_count": int})
 
-                        if use_polars:
-                            df.write_parquet("artists.parquet", compression="zstd")
-                        else:
-                            df.to_parquet("artists.parquet", engine='pyarrow', compression='zstd')
-                        
+                                print(f"\033[1mStep 8:\033[0m Filtering DataFrame to only include rows where category is equal to 1 (artists)")
+                                df = df[df["category"] == 1]
+
+                                print(f"\033[1mStep 9:\033[0m Keeping only the 'name' column from the DataFrame")
+                                df = df[["name"]]
+
+                            print(f"\033[1mStep 10:\033[0m Saving DataFrame to artists.parquet")
+                            if os.path.exists('artists.parquet'):
+                                os.remove('artists.parquet')
+
+                            if use_polars:
+                                df.write_parquet("artists.parquet", compression="zstd")
+                            else:
+                                df.to_parquet("artists.parquet", engine='pyarrow', compression='zstd')
+
                         print(f"\033[32mStep 11:\033[0m artists.parquet done!\033[0m")
                         del df
                     except Exception as e:
