@@ -20,7 +20,7 @@ Tested and working with Python 3.10, 3.11, and 3.12, along with the dependencies
 
 - **Python**: 3.10, 3.11, or 3.12
 - **Operating System**: Windows 10/11 (tested)
-- **RAM**: ~7.5GB free memory for database processing
+- **RAM**: ~2GB free memory for database processing (7.5GB for legacy multithreaded mode)
 - **Storage**: ~5GB free space for database files
 - **Internet**: Stable connection for initial 1.6GB download
 
@@ -70,12 +70,12 @@ Optionally, you can use these flags:
 | Flag        | Description |
 |-------------|-------------|
 | `-p PROXY`, `--proxy PROXY`  | The proxy to use for all network calls. Usage examples: http://proxy.server:8888 or http://user:password@proxy.server:8888. Alternatively, create a proxy.txt file with the proxy URL. |
-| `-m`, `--multithreaded`  | Use Modin RAY engine for multithreaded operations on database. |
+| `-m`, `--multithreaded`  | [LEGACY] Use Modin RAY engine for multithreaded operations. Note: Default mode is now faster. |
 
 > [!CAUTION]  
 > database.py downloads around 1.6GB of data from https://e621.net/db_export/ each time it's run. You will be asked if you want to update the local database if it was downloaded before. If local database doesn't exist, it will be downloaded unconditionally.
 
-~7.5GB of free RAM is required to run it.  
+~2GB of free RAM is required to run it (7.5GB for legacy multithreaded mode).  
 Around 4GB of files will be written to disk as a result: trimmed databases `posts.parquet` and `artists.parquet` and a temporary `latest_posts.csv` file.  
 You don't need to update them unless you want to tag files added to e621 since the last time you've updated the database.  
 Tagger WILL NOT succeed without the correctly prepared databases in its working folder.  
@@ -102,7 +102,7 @@ python tagger.py -t
 # Use proxy for database download
 python database.py -p http://proxy.server:8888
 
-# Use multithreading (requires 7.5GB RAM)
+# Use legacy multithreading (slower, requires 7.5GB RAM)
 python database.py -m
 
 # Tag specific folder without renaming files
@@ -121,7 +121,7 @@ python tagger.py -t -p "C:\ML Dataset"
 
 **"Out of memory" during database processing**
 - Close other applications to free up RAM
-- Remove `-m` flag to use less memory (slower processing)
+- Remove `-m` flag to use less memory (also faster processing)
 
 **"No images found" or "No tags applied"**
 - Ensure images have MD5 hashes that match e621 posts

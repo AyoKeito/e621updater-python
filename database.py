@@ -24,7 +24,7 @@ from rich.console import Console
 
 parser = argparse.ArgumentParser(description="Download and process CSV files. Download gz archives, extract & filter irrelevant data, and save as compressed parquet files.")
 parser.add_argument("--proxy", help="The proxy to use for all network calls (optional). Usage examples: http://proxy.server:8888 or http://user:password@proxy.server:8888")
-parser.add_argument("-m", "--multithreaded", action="store_true", help="Use Modin RAY engine for multithreaded operations on database.")
+parser.add_argument("-m", "--multithreaded", action="store_true", help="[LEGACY] Use Modin RAY engine for multithreaded operations. Note: Single-threaded mode is now faster.")
 args = parser.parse_args()
 
 # Check for proxy.txt file if no proxy argument provided
@@ -250,7 +250,7 @@ async def main(url, proxy, use_multithreaded=False):
                                 print(f"Processing in \033[92mmultithreaded\033[0m mode, \033[92m{modin.config.NPartitions.get()}\033[0m threads detected, initializing Modin RAY engine...")
                                 ray.init()
                             else:
-                                print(f"Processing in \033[93msinglethreaded\033[0m mode...")
+                                print(f"Processing in \033[93mfast\033[0m mode...")
 
                             print(f"\033[1mStep 3:\033[0m Reading extracted posts CSV as a DataFrame")
                             if use_polars and not use_multithreaded:

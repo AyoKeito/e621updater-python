@@ -33,7 +33,7 @@ start.bat
 # Basic database download/update
 python database.py
 
-# With multithreading (requires ~7.5GB RAM)
+# With legacy multithreading (slower, requires ~7.5GB RAM)
 python database.py -m
 
 # With proxy
@@ -58,9 +58,10 @@ python tagger.py -f -n
 ## Key Dependencies
 
 - **pyexiftool**: Requires exiftool.exe in working directory (auto-downloaded)
-- **modin/ray**: Optional multithreading for database operations
+- **modin/ray**: Legacy multithreading for database operations (slower than default)
 - **pyarrow**: Parquet file handling
 - **aiohttp**: Async HTTP for database downloads
+- **rich**: Professional progress bars and console output
 
 ## Database Files
 
@@ -70,6 +71,21 @@ python tagger.py -f -n
 
 The database must be updated via database.py before tagger.py can function. Files uploaded to e621 after the last database update won't be found.
 
+## Progress Display
+
+Both scripts feature professional Rich progress bars:
+
+### database.py Progress Features
+- **Download progress**: Real-time file download with transfer speed, file size, and ETA
+- **Processing steps**: Clear progress indication for database operations
+- **Unified display**: Non-conflicting progress bars for clean output
+
+### tagger.py Progress Features
+- **File processing**: Overall progress with percentage, file count, and ETA
+- **Color-coded output**: Green (found by name), yellow (found by MD5), red (missing)
+- **Filename cropping**: Long filenames are truncated for clean display
+- **Separated display**: Progress bar appears independently from detailed file output
+
 ## Architecture Notes
 
 - Uses MD5 hash matching as primary identification method
@@ -77,3 +93,4 @@ The database must be updated via database.py before tagger.py can function. File
 - Supports both EXIF tagging and sidecar text file output
 - GUI folder selection via tkinter when path not specified
 - Async HTTP downloads with optional proxy support
+- Rich console output with professional progress indicators
