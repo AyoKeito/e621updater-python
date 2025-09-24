@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(venv/Scripts/python.exe analyze_file.py:*)",
+      "Bash(venv/Scripts/python.exe optimize_test.py:*)",
+      "Bash(venv/Scripts/python.exe:*)",
+      "WebFetch(domain:sourceforge.net)",
+      "Bash(./exiftool.exe -ver)",
+      "Bash(copy tagger.py tagger_original_backup.py)",
+      "Bash(del test_progress.py)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

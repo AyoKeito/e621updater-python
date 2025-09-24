@@ -1,6 +1,9 @@
 aiohttp
+pandas
 pyarrow
 dask
 pyexiftool
 modin
 ray
+psutil
+rich

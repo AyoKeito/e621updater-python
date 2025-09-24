@@ -1,0 +1,8 @@
+venv/
+proxy.txt
+posts.parquet
+artists.parquet
+exiftool_files/
+exiftool.exe
+testing/
+__pycache__/
